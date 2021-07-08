@@ -3,6 +3,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
+const userSchema = require("./Schema/userSchema");
+const todoSchema = require("./Schema/todoSchema");
+const db = require("./connection");
 
 const app = express();
 app.use(express.json()); //added body key to request
@@ -22,26 +25,11 @@ app.use(
     origin: "http://localhost:3000",
   })
 );
-const db = mongoose.createConnection("mongodb://localhost:27017/TodoApp", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-const userSchema = new mongoose.Schema({
-  name: String,
-  password: String,
-  mobile: Number,
-  email: String,
-});
-const todoSchema = new mongoose.Schema({
-  task: String,
-  done: Boolean,
-  creationTime: Date,
-  userId: mongoose.Schema.ObjectId,
-});
 
-const userModel = db.model("user", userSchema);
 
-const todoModel = db.model("todo", todoSchema);
+const userModel = mongoose.model("user", userSchema);
+
+const todoModel = mongoose.model("todo", todoSchema);
 
 const isNullorUndefined = (val) => val === null || val === undefined;
 
@@ -137,7 +125,7 @@ app.put("/todo/:todoid", AuthMiddleware, async (req, res) => {
 
 app.delete("/todo/:todoId", AuthMiddleware, async (req, res) => {
   const todoId = req.params.todoId;
-  console.log("deleting task",todoId);
+  console.log("deleting task", todoId);
   try {
     await todoModel.deleteOne({ _id: todoId, userId: req.session.userId });
     res.sendStatus(200);
@@ -147,7 +135,7 @@ app.delete("/todo/:todoId", AuthMiddleware, async (req, res) => {
 });
 
 app.get("/logout", (req, res) => {
-    console.log("logout");
+  console.log("logout");
   if (!isNullorUndefined(req.session)) {
     req.session.destroy(() => {
       res.sendStatus(200);
